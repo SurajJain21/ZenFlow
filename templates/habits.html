@@ -1,0 +1,77 @@
+{% extends 'base.html' %}
+{% block title %}Habit Tracker{% endblock %}
+{% block heading %}<i class="bi bi-check2-circle text-habit"></i> Habit Tracker{% endblock %}
+
+{% block content %}
+<div class="row g-3 mb-4">
+    <div class="col-6 col-lg-3"><div class="stat-card tone-habit"><small>Total habits</small><strong>{{ total }}</strong></div></div>
+    <div class="col-6 col-lg-3"><div class="stat-card tone-habit"><small>Completed</small><strong>{{ completed }}</strong></div></div>
+    <div class="col-6 col-lg-3"><div class="stat-card tone-habit"><small>Pending</small><strong>{{ pending }}</strong></div></div>
+    <div class="col-6 col-lg-3"><div class="stat-card tone-habit"><small>Completion</small><strong>{{ pct }}%</strong></div></div>
+</div>
+
+<div class="row g-4">
+    <div class="col-lg-8">
+        <div class="panel tone-habit h-100">
+            <div class="panel-head"><h2>Today's habits</h2></div>
+            <div class="progress big mb-4"><div class="progress-bar bg-habit" style="width: {{ pct }}%"></div></div>
+            {% if habits %}
+                {% for h in habits %}
+                <div class="habit-row {% if h.done %}done{% endif %}">
+                    <form method="post" action="{{ url_for('toggle_habit', habit_id=h.id) }}">
+                        <button type="submit" class="habit-check" aria-label="{{ 'Undo' if h.done else 'Mark complete' }}">
+                            <i class="bi {% if h.done %}bi-check-lg{% endif %}"></i>
+                        </button>
+                    </form>
+                    <div class="flex-grow-1">
+                        <div class="habit-name">{{ h.name }}</div>
+                        <small class="text-muted"><i class="bi bi-fire text-habit"></i> Current streak: {{ h.current }} day{{ 's' if h.current != 1 }} &middot; <i class="bi bi-trophy"></i> Longest: {{ h.longest }}</small>
+                    </div>
+                    <form method="post" action="{{ url_for('toggle_habit', habit_id=h.id) }}" class="d-none d-sm-block">
+                        <button type="submit" class="btn btn-sm {% if h.done %}btn-light-soft{% else %}btn-brand-habit{% endif %}">{{ 'Undo' if h.done else 'Complete' }}</button>
+                    </form>
+                    <form method="post" action="{{ url_for('delete_habit', habit_id=h.id) }}" data-confirm="Delete this habit and its history?">
+                        <button type="submit" class="btn btn-sm btn-delete" aria-label="Delete habit"><i class="bi bi-trash3"></i></button>
+                    </form>
+                </div>
+                {% endfor %}
+            {% else %}
+                <p class="text-muted">You have no habits yet. Create one or pick a suggestion.</p>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="col-lg-4">
+        <div class="panel tone-habit mb-4">
+            <div class="panel-head"><h2>Create a habit</h2></div>
+            <form method="post" action="{{ url_for('add_habit') }}" class="needs-validation" novalidate>
+                <div class="input-group">
+                    <input type="text" class="form-control" name="habit_name" maxlength="60" placeholder="e.g. Journal for 5 minutes" required aria-label="Habit name">
+                    <button class="btn btn-brand-habit" type="submit">Add</button>
+                    <div class="invalid-feedback">Please enter a habit name.</div>
+                </div>
+            </form>
+        </div>
+        {% if suggestions %}
+        <div class="panel tone-habit">
+            <div class="panel-head"><h2>Suggestions</h2></div>
+            <div class="d-flex flex-wrap gap-2">
+                {% for s in suggestions %}
+                <form method="post" action="{{ url_for('add_habit') }}">
+                    <input type="hidden" name="habit_name" value="{{ s }}">
+                    <button type="submit" class="habit-chip"><i class="bi bi-plus"></i> {{ s }}</button>
+                </form>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+    </div>
+
+    <div class="col-12">
+        <div class="panel">
+            <div class="panel-head"><h2>Daily habit completion (last 7 days)</h2></div>
+            <div class="chart-box tall"><canvas id="habitChart"></canvas></div>
+        </div>
+    </div>
+</div>
+{% endblock %}

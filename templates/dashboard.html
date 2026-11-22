@@ -1,0 +1,141 @@
+{% extends 'base.html' %}
+{% block title %}Dashboard{% endblock %}
+{% block heading %}Hello, {{ current_user_name }} <span class="wave">👋</span>{% endblock %}
+{% block actions %}
+    <a href="{{ url_for('analytics') }}" class="btn btn-light-soft"><i class="bi bi-bar-chart-line"></i> Weekly report</a>
+{% endblock %}
+
+{% block content %}
+<!-- Overall progress banner -->
+<div class="overall-card mb-4">
+    <div class="ring" style="--value: {{ overall }}">
+        <span>{{ overall }}%</span>
+    </div>
+    <div class="flex-grow-1">
+        <h2 class="h5 fw-bold mb-1">Overall daily progress</h2>
+        <p class="mb-3 opacity-75">Average of today's water, sleep, activity and habit goals.</p>
+        <div class="mini-bars">
+            <div><small>Water</small><div class="progress thin"><div class="progress-bar bg-water" style="width: {{ water_pct }}%"></div></div></div>
+            <div><small>Sleep</small><div class="progress thin"><div class="progress-bar bg-sleep" style="width: {{ sleep_pct }}%"></div></div></div>
+            <div><small>Activity</small><div class="progress thin"><div class="progress-bar bg-activity" style="width: {{ activity_pct }}%"></div></div></div>
+            <div><small>Habits</small><div class="progress thin"><div class="progress-bar bg-habit" style="width: {{ habit_pct }}%"></div></div></div>
+        </div>
+    </div>
+</div>
+
+<!-- Stat cards -->
+<div class="row g-3 mb-4">
+    <div class="col-6 col-md-4 col-xl"><div class="stat-card tone-water"><span class="icon-bubble"><i class="bi bi-droplet-fill"></i></span><small>Today's Water</small><strong>{{ water }} ml</strong></div></div>
+    <div class="col-6 col-md-4 col-xl"><div class="stat-card tone-water"><span class="icon-bubble"><i class="bi bi-bullseye"></i></span><small>Daily Goal</small><strong>{{ water_goal }} ml</strong></div></div>
+    <div class="col-6 col-md-4 col-xl"><div class="stat-card tone-water"><span class="icon-bubble"><i class="bi bi-hourglass-split"></i></span><small>Remaining</small><strong>{{ water_remaining }} ml</strong></div></div>
+    <div class="col-6 col-md-4 col-xl"><div class="stat-card tone-sleep"><span class="icon-bubble"><i class="bi bi-moon-stars-fill"></i></span><small>Total Sleep</small><strong>{{ sleep|hours }}</strong></div></div>
+    <div class="col-6 col-md-4 col-xl"><div class="stat-card tone-activity"><span class="icon-bubble"><i class="bi bi-stopwatch-fill"></i></span><small>Activity</small><strong>{{ activity }} min</strong></div></div>
+    <div class="col-6 col-md-4 col-xl"><div class="stat-card tone-habit"><span class="icon-bubble"><i class="bi bi-check2-all"></i></span><small>Habits Done</small><strong>{{ done_habits }} / {{ total_habits }}</strong></div></div>
+</div>
+
+<div class="row g-4">
+    <!-- Water progress -->
+    <div class="col-lg-6">
+        <div class="panel h-100 tone-water">
+            <div class="panel-head">
+                <h2><i class="bi bi-droplet-fill"></i> Water intake</h2>
+                <a href="{{ url_for('water') }}" class="panel-link">Open <i class="bi bi-arrow-right"></i></a>
+            </div>
+            <div class="d-flex justify-content-between mb-2"><span>{{ water }} ml of {{ water_goal }} ml</span><strong>{{ water_pct }}%</strong></div>
+            <div class="progress big mb-3"><div class="progress-bar bg-water" style="width: {{ water_pct }}%"></div></div>
+            <form method="post" action="{{ url_for('add_water') }}" class="d-flex flex-wrap gap-2">
+                <input type="hidden" name="next" value="{{ url_for('dashboard') }}">
+                {% for ml in [250, 500, 750] %}
+                <button type="submit" name="amount" value="{{ ml }}" class="btn btn-tone">+{{ ml }} ml</button>
+                {% endfor %}
+            </form>
+        </div>
+    </div>
+
+    <!-- Habit progress -->
+    <div class="col-lg-6">
+        <div class="panel h-100 tone-habit">
+            <div class="panel-head">
+                <h2><i class="bi bi-check2-circle"></i> Today's habits</h2>
+                <a href="{{ url_for('habits') }}" class="panel-link">Open <i class="bi bi-arrow-right"></i></a>
+            </div>
+            <div class="d-flex justify-content-between mb-2"><span>{{ done_habits }} of {{ total_habits }} completed</span><strong>{{ habit_pct }}%</strong></div>
+            <div class="progress big mb-3"><div class="progress-bar bg-habit" style="width: {{ habit_pct }}%"></div></div>
+            {% if habits %}
+            <div class="habit-chips">
+                {% for h in habits %}
+                <form method="post" action="{{ url_for('toggle_habit', habit_id=h.id) }}">
+                    <input type="hidden" name="next" value="{{ url_for('dashboard') }}">
+                    <button class="habit-chip {% if h.done %}done{% endif %}" type="submit">
+                        <i class="bi {% if h.done %}bi-check-circle-fill{% else %}bi-circle{% endif %}"></i> {{ h.habit_name }}
+                    </button>
+                </form>
+                {% endfor %}
+            </div>
+            {% else %}
+            <p class="text-muted mb-0">No habits yet. <a href="{{ url_for('habits') }}">Add your first habit</a>.</p>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Sleep summary -->
+    <div class="col-lg-6">
+        <div class="panel h-100 tone-sleep">
+            <div class="panel-head">
+                <h2><i class="bi bi-moon-stars-fill"></i> Today's sleep</h2>
+                <a href="{{ url_for('sleep') }}" class="panel-link">Open <i class="bi bi-arrow-right"></i></a>
+            </div>
+            {% if today_sleep %}
+                <div class="d-flex justify-content-between mb-2"><span>{{ sleep|hours }} of {{ sleep_goal|hours }} target</span><strong>{{ sleep_pct }}%</strong></div>
+                <div class="progress big mb-3"><div class="progress-bar bg-sleep" style="width: {{ sleep_pct }}%"></div></div>
+                {% for s in today_sleep %}
+                <div class="list-row"><span><i class="bi bi-moon"></i> {{ s.bedtime|time12 }} &rarr; <i class="bi bi-sun"></i> {{ s.wakeup_time|time12 }}</span><strong>{{ s.duration|hours }}</strong></div>
+                {% endfor %}
+            {% else %}
+                <p class="text-muted">You haven't logged last night's sleep yet.</p>
+                <a href="{{ url_for('sleep') }}" class="btn btn-tone">Log sleep</a>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Recent activities -->
+    <div class="col-lg-6">
+        <div class="panel h-100 tone-activity">
+            <div class="panel-head">
+                <h2><i class="bi bi-bicycle"></i> Recent activities</h2>
+                <a href="{{ url_for('activity') }}" class="panel-link">Open <i class="bi bi-arrow-right"></i></a>
+            </div>
+            {% if recent_activities %}
+                {% for a in recent_activities %}
+                <div class="list-row">
+                    <span><strong>{{ a.activity_type }}</strong> <small class="text-muted">&middot; {{ a.date|nicedate }}</small></span>
+                    <span class="badge-soft">{{ a.duration }} min</span>
+                </div>
+                {% endfor %}
+            {% else %}
+                <p class="text-muted">No activities recorded yet.</p>
+                <a href="{{ url_for('activity') }}" class="btn btn-tone">Add activity</a>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Weekly charts -->
+    <div class="col-lg-6">
+        <div class="panel"><div class="panel-head"><h2><i class="bi bi-bar-chart-fill text-water"></i> Water this week</h2></div>
+            <div class="chart-box"><canvas id="waterChart"></canvas></div></div>
+    </div>
+    <div class="col-lg-6">
+        <div class="panel"><div class="panel-head"><h2><i class="bi bi-bar-chart-fill text-activity"></i> Activity this week</h2></div>
+            <div class="chart-box"><canvas id="activityChart"></canvas></div></div>
+    </div>
+</div>
+
+<!-- Quick navigation -->
+<h2 class="section-title mt-5">Quick navigation</h2>
+<div class="row g-3">
+    <div class="col-6 col-md-3"><a class="quick-link tone-water" href="{{ url_for('water') }}"><i class="bi bi-droplet-fill"></i> Water</a></div>
+    <div class="col-6 col-md-3"><a class="quick-link tone-sleep" href="{{ url_for('sleep') }}"><i class="bi bi-moon-stars-fill"></i> Sleep</a></div>
+    <div class="col-6 col-md-3"><a class="quick-link tone-activity" href="{{ url_for('activity') }}"><i class="bi bi-bicycle"></i> Activity</a></div>
+    <div class="col-6 col-md-3"><a class="quick-link tone-habit" href="{{ url_for('habits') }}"><i class="bi bi-check2-circle"></i> Habits</a></div>
+</div>
+{% endblock %}

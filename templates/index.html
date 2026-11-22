@@ -1,0 +1,50 @@
+{% extends 'base.html' %}
+{% block title %}Home{% endblock %}
+{% block public_content %}
+<section class="hero">
+    <div class="container">
+        <div class="row align-items-center g-5">
+            <div class="col-lg-6">
+                <span class="pill"><i class="bi bi-stars"></i> Your daily wellness companion</span>
+                <h1 class="hero-title">Find your flow.<br><span class="text-gradient">Track what keeps you well.</span></h1>
+                <p class="hero-text">ZenFlow helps you monitor water intake, sleep, physical activity and daily habits &mdash; all in one calm, simple dashboard with weekly charts.</p>
+                <div class="d-flex flex-wrap gap-2">
+                    {% if session.get('user_id') %}
+                        <a href="{{ url_for('dashboard') }}" class="btn btn-brand btn-lg">Open Dashboard</a>
+                    {% else %}
+                        <a href="{{ url_for('register') }}" class="btn btn-brand btn-lg">Create free account</a>
+                        <a href="{{ url_for('login') }}" class="btn btn-light-soft btn-lg">I already have one</a>
+                    {% endif %}
+                </div>
+            </div>
+            <div class="col-lg-6">
+                <div class="hero-preview">
+                    <div class="preview-card tone-water"><i class="bi bi-droplet-fill"></i><div><small>Water</small><strong>1,500 / 2,500 ml</strong><div class="progress thin"><div class="progress-bar bg-water" style="width:60%"></div></div></div></div>
+                    <div class="preview-card tone-sleep"><i class="bi bi-moon-stars-fill"></i><div><small>Sleep</small><strong>7h 45m</strong></div></div>
+                    <div class="preview-card tone-activity"><i class="bi bi-bicycle"></i><div><small>Activity</small><strong>45 min cycling</strong></div></div>
+                    <div class="preview-card tone-habit"><i class="bi bi-fire"></i><div><small>Habits</small><strong>4 of 5 done &middot; 6 day streak</strong></div></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="container features">
+    <div class="row g-4">
+        <div class="col-sm-6 col-lg-3">
+            <div class="feature-card tone-water"><span class="icon-bubble"><i class="bi bi-droplet-fill"></i></span><h3>Water Tracker</h3><p>Quick-add 250, 500 or 750 ml, set your goal and see what's left.</p></div>
+        </div>
+        <div class="col-sm-6 col-lg-3">
+            <div class="feature-card tone-sleep"><span class="icon-bubble"><i class="bi bi-moon-stars-fill"></i></span><h3>Sleep Tracker</h3><p>Enter bedtime and wake-up time &mdash; duration is calculated for you.</p></div>
+        </div>
+        <div class="col-sm-6 col-lg-3">
+            <div class="feature-card tone-activity"><span class="icon-bubble"><i class="bi bi-bicycle"></i></span><h3>Activity Tracker</h3><p>Log walking, running, gym, yoga and more with steps and distance.</p></div>
+        </div>
+        <div class="col-sm-6 col-lg-3">
+            <div class="feature-card tone-habit"><span class="icon-bubble"><i class="bi bi-check2-circle"></i></span><h3>Habit Tracker</h3><p>Build custom habits, tick them off daily and grow your streaks.</p></div>
+        </div>
+    </div>
+</section>
+
+<footer class="public-footer container">ZenFlow &middot; Smart Wellness Tracker &middot; Built with Python, Flask &amp; SQLite</footer>
+{% endblock %}

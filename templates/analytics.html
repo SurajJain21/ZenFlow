@@ -1,0 +1,20 @@
+{% extends 'base.html' %}
+{% block title %}Weekly Analytics{% endblock %}
+{% block heading %}<i class="bi bi-bar-chart-line-fill text-brand"></i> Weekly Analytics{% endblock %}
+
+{% block content %}
+<p class="text-muted mb-4">Your progress over the last 7 days, calculated from your saved records.</p>
+<div class="row g-3 mb-4">
+    <div class="col-6 col-lg-3"><div class="stat-card tone-water"><span class="icon-bubble"><i class="bi bi-droplet-fill"></i></span><small>Avg water / day</small><strong>{{ water_avg }} ml</strong></div></div>
+    <div class="col-6 col-lg-3"><div class="stat-card tone-sleep"><span class="icon-bubble"><i class="bi bi-moon-stars-fill"></i></span><small>Avg sleep</small><strong>{{ sleep_avg|hours }}</strong></div></div>
+    <div class="col-6 col-lg-3"><div class="stat-card tone-activity"><span class="icon-bubble"><i class="bi bi-stopwatch-fill"></i></span><small>Total activity</small><strong>{{ activity_week }} min</strong></div></div>
+    <div class="col-6 col-lg-3"><div class="stat-card tone-habit"><span class="icon-bubble"><i class="bi bi-check2-all"></i></span><small>Habit completion</small><strong>{{ habit_overall }}%</strong></div></div>
+</div>
+
+<div class="row g-4">
+    <div class="col-lg-6"><div class="panel"><div class="panel-head"><h2><i class="bi bi-droplet-fill text-water"></i> Weekly water consumption</h2></div><div class="chart-box tall"><canvas id="waterChart"></canvas></div></div></div>
+    <div class="col-lg-6"><div class="panel"><div class="panel-head"><h2><i class="bi bi-moon-stars-fill text-sleep"></i> Weekly sleep duration</h2></div><div class="chart-box tall"><canvas id="sleepChart"></canvas></div></div></div>
+    <div class="col-lg-6"><div class="panel"><div class="panel-head"><h2><i class="bi bi-bicycle text-activity"></i> Weekly physical activity</h2></div><div class="chart-box tall"><canvas id="activityChart"></canvas></div></div></div>
+    <div class="col-lg-6"><div class="panel"><div class="panel-head"><h2><i class="bi bi-check2-circle text-habit"></i> Daily habit completion</h2></div><div class="chart-box tall"><canvas id="habitChart"></canvas></div></div></div>
+</div>
+{% endblock %}

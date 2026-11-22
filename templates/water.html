@@ -1,0 +1,107 @@
+{% extends 'base.html' %}
+{% block title %}Water Tracker{% endblock %}
+{% block heading %}<i class="bi bi-droplet-fill text-water"></i> Water Tracker{% endblock %}
+
+{% block content %}
+<div class="row g-3 mb-4">
+    <div class="col-6 col-lg-3"><div class="stat-card tone-water"><small>Consumed today</small><strong>{{ total }} ml</strong></div></div>
+    <div class="col-6 col-lg-3"><div class="stat-card tone-water"><small>Daily goal</small><strong>{{ goal }} ml</strong></div></div>
+    <div class="col-6 col-lg-3"><div class="stat-card tone-water"><small>Remaining</small><strong>{{ remaining }} ml</strong></div></div>
+    <div class="col-6 col-lg-3"><div class="stat-card tone-water"><small>Progress</small><strong>{{ pct }}%</strong></div></div>
+</div>
+
+<div class="row g-4">
+    <div class="col-lg-7">
+        <div class="panel tone-water h-100">
+            <div class="panel-head"><h2>Add water</h2></div>
+            <div class="d-flex justify-content-between mb-2"><span>{{ total }} / {{ goal }} ml</span><strong>{{ pct }}%</strong></div>
+            <div class="progress big mb-4"><div class="progress-bar bg-water" style="width: {{ pct }}%">{% if pct >= 10 %}{{ pct }}%{% endif %}</div></div>
+
+            <form method="post" action="{{ url_for('add_water') }}" class="d-flex flex-wrap gap-2 mb-4">
+                {% for ml in [250, 500, 750] %}
+                <button type="submit" name="amount" value="{{ ml }}" class="btn btn-tone btn-lg flex-fill"><i class="bi bi-cup-straw"></i> +{{ ml }} ml</button>
+                {% endfor %}
+            </form>
+
+            <form method="post" action="{{ url_for('add_water') }}" class="needs-validation" novalidate>
+                <label class="form-label" for="amount">Custom amount (ml)</label>
+                <div class="input-group">
+                    <input type="number" class="form-control" id="amount" name="amount" min="1" max="5000" placeholder="e.g. 300" required>
+                    <button class="btn btn-brand-water" type="submit">Add</button>
+                    <div class="invalid-feedback">Enter an amount between 1 and 5000 ml.</div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="col-lg-5">
+        <div class="panel tone-water h-100">
+            <div class="panel-head"><h2>Daily goal</h2></div>
+            <p class="text-muted">Recommended: around 2500 ml per day for most adults.</p>
+            <form method="post" action="{{ url_for('set_water_goal') }}" class="needs-validation" novalidate>
+                <label class="form-label" for="goal">Goal (ml)</label>
+                <div class="input-group">
+                    <input type="number" class="form-control" id="goal" name="goal" min="500" max="10000" value="{{ goal }}" required>
+                    <button class="btn btn-brand-water" type="submit">Save goal</button>
+                    <div class="invalid-feedback">Goal must be 500 - 10000 ml.</div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="col-lg-6">
+        <div class="panel h-100">
+            <div class="panel-head"><h2>Today's history</h2><span class="badge-soft tone-water">{{ today_records|length }} entries</span></div>
+            {% if today_records %}
+            <div class="table-responsive">
+                <table class="table align-middle mb-0">
+                    <thead><tr><th>Time</th><th>Amount</th><th class="text-end">Action</th></tr></thead>
+                    <tbody>
+                    {% for r in today_records %}
+                        <tr>
+                            <td>{{ r.time|time12 }}</td>
+                            <td><strong>{{ r.amount_ml }} ml</strong></td>
+                            <td class="text-end">
+                                <form method="post" action="{{ url_for('delete_water', record_id=r.id) }}" data-confirm="Delete this water record?">
+                                    <button class="btn btn-sm btn-delete" type="submit" aria-label="Delete"><i class="bi bi-trash3"></i></button>
+                                </form>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <p class="text-muted mb-0">No water logged today. Use the buttons above to start.</p>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="col-lg-6">
+        <div class="panel h-100">
+            <div class="panel-head"><h2>Last 7 days</h2></div>
+            <div class="table-responsive">
+                <table class="table align-middle mb-0">
+                    <thead><tr><th>Date</th><th>Total</th><th style="width:40%">Goal reached</th></tr></thead>
+                    <tbody>
+                    {% for d in week_history %}
+                        <tr>
+                            <td>{{ d.date|nicedate }}</td>
+                            <td>{{ d.total }} ml</td>
+                            <td><div class="progress thin"><div class="progress-bar bg-water" style="width: {{ d.pct }}%"></div></div><small class="text-muted">{{ d.pct }}%</small></td>
+                        </tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-12">
+        <div class="panel">
+            <div class="panel-head"><h2>Weekly consumption vs goal</h2></div>
+            <div class="chart-box tall"><canvas id="waterChart"></canvas></div>
+        </div>
+    </div>
+</div>
+{% endblock %}

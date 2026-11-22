@@ -1,0 +1,86 @@
+{% extends 'base.html' %}
+{% block title %}Profile & Settings{% endblock %}
+{% block heading %}<i class="bi bi-person-circle text-brand"></i> Profile &amp; Settings{% endblock %}
+
+{% block content %}
+<div class="row g-4">
+    <div class="col-lg-4">
+        <div class="panel text-center h-100">
+            <div class="avatar xl mx-auto mb-3">{{ user.name[0]|upper }}</div>
+            <h2 class="h5 fw-bold mb-0">{{ user.name }}</h2>
+            <p class="text-muted">{{ user.email }}</p>
+            <p class="small text-muted mb-4">Member since {{ user.created_at[:10]|nicedate }}</p>
+            <div class="row g-2 text-start">
+                <div class="col-6"><div class="mini-stat tone-water"><small>Water logs</small><strong>{{ stats.water }}</strong></div></div>
+                <div class="col-6"><div class="mini-stat tone-sleep"><small>Sleep logs</small><strong>{{ stats.sleep }}</strong></div></div>
+                <div class="col-6"><div class="mini-stat tone-activity"><small>Activities</small><strong>{{ stats.activity }}</strong></div></div>
+                <div class="col-6"><div class="mini-stat tone-habit"><small>Habits</small><strong>{{ stats.habits }}</strong></div></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-8">
+        <div class="panel mb-4">
+            <div class="panel-head"><h2>Personal details</h2></div>
+            <form method="post" action="{{ url_for('profile') }}" class="needs-validation" novalidate>
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label class="form-label" for="name">Name</label>
+                        <input type="text" class="form-control" id="name" name="name" value="{{ user.name }}" maxlength="60" required>
+                        <div class="invalid-feedback">Name is required.</div>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label" for="email">Email</label>
+                        <input type="email" class="form-control" id="email" name="email" value="{{ user.email }}" required>
+                        <div class="invalid-feedback">Enter a valid email.</div>
+                    </div>
+                </div>
+                <button class="btn btn-brand mt-3" type="submit">Save profile</button>
+            </form>
+        </div>
+
+        <div class="panel mb-4">
+            <div class="panel-head"><h2>Daily goals</h2></div>
+            <form method="post" action="{{ url_for('update_goals') }}" class="needs-validation" novalidate>
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label class="form-label" for="water_goal">Water goal (ml)</label>
+                        <input type="number" class="form-control" id="water_goal" name="water_goal" min="500" max="10000" value="{{ goals.daily_water_goal }}" required>
+                        <div class="invalid-feedback">500 - 10000 ml.</div>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label" for="sleep_goal">Sleep target (hours)</label>
+                        <input type="number" class="form-control" id="sleep_goal" name="sleep_goal" min="1" max="16" step="0.5" value="{{ goals.daily_sleep_goal|round(1) }}" required>
+                        <div class="invalid-feedback">1 - 16 hours.</div>
+                    </div>
+                </div>
+                <button class="btn btn-brand mt-3" type="submit">Save goals</button>
+            </form>
+        </div>
+
+        <div class="panel">
+            <div class="panel-head"><h2>Change password</h2></div>
+            <form method="post" action="{{ url_for('change_password') }}" class="needs-validation" novalidate>
+                <div class="row g-3">
+                    <div class="col-md-4">
+                        <label class="form-label" for="current_password">Current password</label>
+                        <input type="password" class="form-control" id="current_password" name="current_password" required>
+                        <div class="invalid-feedback">Required.</div>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label" for="new_password">New password</label>
+                        <input type="password" class="form-control" id="new_password" name="new_password" minlength="6" required>
+                        <div class="invalid-feedback">At least 6 characters.</div>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label" for="confirm_password">Confirm new password</label>
+                        <input type="password" class="form-control" id="confirm_password" name="confirm_password" minlength="6" required>
+                        <div class="invalid-feedback">Required.</div>
+                    </div>
+                </div>
+                <button class="btn btn-light-soft mt-3" type="submit">Update password</button>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,126 @@
+{% extends 'base.html' %}
+{% block title %}Activity Tracker{% endblock %}
+{% block heading %}<i class="bi bi-bicycle text-activity"></i> Activity Tracker{% endblock %}
+
+{% block content %}
+<div class="row g-4">
+    <div class="col-lg-7">
+        <div class="panel tone-activity h-100">
+            <div class="panel-head"><h2>Record an activity</h2></div>
+            <form method="post" action="{{ url_for('add_activity') }}" class="needs-validation" novalidate>
+                <label class="form-label">Activity type</label>
+                <div class="type-picker mb-3">
+                    {% for t in types %}
+                    <input type="radio" class="btn-check" name="activity_type" id="type{{ loop.index }}" value="{{ t }}" {% if loop.first %}checked{% endif %} required>
+                    <label class="type-option" for="type{{ loop.index }}">{{ t }}</label>
+                    {% endfor %}
+                </div>
+                <div class="row g-3">
+                    <div class="col-sm-6">
+                        <label class="form-label" for="duration">Duration (minutes) *</label>
+                        <input type="number" class="form-control" id="duration" name="duration" min="1" max="1440" required placeholder="e.g. 30">
+                        <div class="invalid-feedback">Enter 1 - 1440 minutes.</div>
+                    </div>
+                    <div class="col-sm-6">
+                        <label class="form-label" for="act_date">Date *</label>
+                        <input type="date" class="form-control" id="act_date" name="date" value="{{ today }}" max="{{ today }}" required>
+                        <div class="invalid-feedback">Pick a valid date.</div>
+                    </div>
+                    <div class="col-sm-6">
+                        <label class="form-label" for="distance">Distance in km (optional)</label>
+                        <input type="number" class="form-control" id="distance" name="distance" min="0" step="0.01" placeholder="e.g. 3.5">
+                        <div class="invalid-feedback">Must be 0 or more.</div>
+                    </div>
+                    <div class="col-sm-6">
+                        <label class="form-label" for="steps">Steps (optional)</label>
+                        <input type="number" class="form-control" id="steps" name="steps" min="0" step="1" placeholder="e.g. 4000">
+                        <div class="invalid-feedback">Must be 0 or more.</div>
+                    </div>
+                </div>
+                <button class="btn btn-brand-activity mt-4" type="submit"><i class="bi bi-plus-lg"></i> Save activity</button>
+            </form>
+        </div>
+    </div>
+
+    <div class="col-lg-5">
+        <div class="panel tone-activity h-100">
+            <div class="panel-head">
+                <h2>Daily summary</h2>
+                <form method="get" class="d-flex gap-2">
+                    <input type="date" class="form-control form-control-sm" name="date" value="{{ selected }}" max="{{ today }}" onchange="this.form.submit()" aria-label="Choose date">
+                </form>
+            </div>
+            <p class="text-muted small mb-3">{{ selected|nicedate }}</p>
+            <div class="row g-2 mb-3">
+                <div class="col-4"><div class="mini-stat"><small>Minutes</small><strong>{{ totals.minutes }}</strong></div></div>
+                <div class="col-4"><div class="mini-stat"><small>Steps</small><strong>{{ totals.steps }}</strong></div></div>
+                <div class="col-4"><div class="mini-stat"><small>Km</small><strong>{{ '%.2f'|format(totals.distance) }}</strong></div></div>
+            </div>
+            {% if day_records %}
+                {% for a in day_records %}
+                <div class="list-row">
+                    <span><strong>{{ a.activity_type }}</strong> <small class="text-muted">{{ a.duration }} min{% if a.distance %} &middot; {{ a.distance }} km{% endif %}{% if a.steps %} &middot; {{ a.steps }} steps{% endif %}</small></span>
+                    <form method="post" action="{{ url_for('delete_activity', record_id=a.id) }}" data-confirm="Delete this activity?">
+                        <input type="hidden" name="next" value="{{ url_for('activity', date=selected) }}">
+                        <button class="btn btn-sm btn-delete" type="submit" aria-label="Delete"><i class="bi bi-trash3"></i></button>
+                    </form>
+                </div>
+                {% endfor %}
+            {% else %}
+                <p class="text-muted mb-0">No activities on this day.</p>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="col-lg-8">
+        <div class="panel">
+            <div class="panel-head"><h2>Weekly activity duration</h2></div>
+            <div class="chart-box tall"><canvas id="activityChart"></canvas></div>
+        </div>
+    </div>
+    <div class="col-lg-4">
+        <div class="panel h-100">
+            <div class="panel-head"><h2>Activity types (7 days)</h2></div>
+            {% if type_summary %}
+                <div class="chart-box"><canvas id="activityTypeChart"></canvas></div>
+                {% for t in type_summary %}
+                <div class="list-row"><span>{{ t.activity_type }} <small class="text-muted">&middot; {{ t.sessions }} session{{ 's' if t.sessions != 1 }}</small></span><strong>{{ t.minutes }} min</strong></div>
+                {% endfor %}
+            {% else %}
+                <p class="text-muted mb-0">No activities in the last 7 days.</p>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="col-12">
+        <div class="panel">
+            <div class="panel-head"><h2>Activity history</h2><span class="badge-soft tone-activity">Last {{ history|length }} records</span></div>
+            {% if history %}
+            <div class="table-responsive">
+                <table class="table align-middle mb-0">
+                    <thead><tr><th>Date</th><th>Type</th><th>Duration</th><th>Distance</th><th>Steps</th><th class="text-end">Action</th></tr></thead>
+                    <tbody>
+                    {% for a in history %}
+                        <tr>
+                            <td>{{ a.date|nicedate }}</td>
+                            <td><strong>{{ a.activity_type }}</strong></td>
+                            <td>{{ a.duration }} min</td>
+                            <td>{{ (a.distance ~ ' km') if a.distance is not none else '—' }}</td>
+                            <td>{{ a.steps if a.steps is not none else '—' }}</td>
+                            <td class="text-end">
+                                <form method="post" action="{{ url_for('delete_activity', record_id=a.id) }}" data-confirm="Delete this activity?">
+                                    <button class="btn btn-sm btn-delete" type="submit" aria-label="Delete"><i class="bi bi-trash3"></i></button>
+                                </form>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <p class="text-muted mb-0">No activities recorded yet.</p>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

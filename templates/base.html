@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{% block title %}ZenFlow{% endblock %} | ZenFlow Wellness Tracker</title>
+
+    <!-- Bootstrap 5, Bootstrap Icons and Google Font (all free CDNs) -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🌿</text></svg>">
+    <link href="{{ url_for('static', filename='css/style.css') }}" rel="stylesheet">
+</head>
+<body>
+
+{% set public_pages = ['index', 'login', 'register', 'not_found'] %}
+{% set app_layout = session.get('user_id') and request.endpoint not in public_pages %}
+
+{% if app_layout %}
+    {# ---------- Logged-in layout: sidebar + content ---------- #}
+    {% set nav_items = [
+        ('dashboard', 'bi-grid-1x2-fill', 'Dashboard', 'brand'),
+        ('water', 'bi-droplet-fill', 'Water', 'water'),
+        ('sleep', 'bi-moon-stars-fill', 'Sleep', 'sleep'),
+        ('activity', 'bi-bicycle', 'Activity', 'activity'),
+        ('habits', 'bi-check2-circle', 'Habits', 'habit'),
+        ('analytics', 'bi-bar-chart-line-fill', 'Analytics', 'brand'),
+        ('profile', 'bi-person-circle', 'Profile', 'brand'),
+    ] %}
+
+    <!-- Mobile top bar -->
+    <nav class="mobile-bar d-lg-none">
+        <a class="brand" href="{{ url_for('dashboard') }}"><span class="brand-mark"><i class="bi bi-flower1"></i></span> ZenFlow</a>
+        <button class="btn btn-icon" type="button" data-bs-toggle="offcanvas" data-bs-target="#mobileMenu" aria-label="Open menu">
+            <i class="bi bi-list"></i>
+        </button>
+    </nav>
+
+    <!-- Mobile slide-in menu -->
+    <div class="offcanvas offcanvas-start sidebar-offcanvas" tabindex="-1" id="mobileMenu">
+        <div class="offcanvas-header">
+            <a class="brand" href="{{ url_for('dashboard') }}"><span class="brand-mark"><i class="bi bi-flower1"></i></span> ZenFlow</a>
+            <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+        </div>
+        <div class="offcanvas-body">
+            {% for endpoint, icon, label, tone in nav_items %}
+            <a href="{{ url_for(endpoint) }}" class="side-link tone-{{ tone }} {% if request.endpoint == endpoint %}active{% endif %}">
+                <i class="bi {{ icon }}"></i> {{ label }}
+            </a>
+            {% endfor %}
+            <a href="{{ url_for('logout') }}" class="side-link logout"><i class="bi bi-box-arrow-right"></i> Logout</a>
+        </div>
+    </div>
+
+    <div class="app-shell">
+        <!-- Desktop sidebar -->
+        <aside class="sidebar d-none d-lg-flex">
+            <a class="brand" href="{{ url_for('dashboard') }}"><span class="brand-mark"><i class="bi bi-flower1"></i></span> ZenFlow</a>
+            <nav class="side-nav">
+                {% for endpoint, icon, label, tone in nav_items %}
+                <a href="{{ url_for(endpoint) }}" class="side-link tone-{{ tone }} {% if request.endpoint == endpoint %}active{% endif %}">
+                    <i class="bi {{ icon }}"></i> {{ label }}
+                </a>
+                {% endfor %}
+            </nav>
+            <div class="sidebar-user">
+                <div class="avatar">{{ (current_user_name or 'U')[0]|upper }}</div>
+                <div class="flex-grow-1 text-truncate">
+                    <div class="fw-semibold text-truncate">{{ current_user_name }}</div>
+                    <a href="{{ url_for('logout') }}" class="small text-muted">Logout</a>
+                </div>
+            </div>
+        </aside>
+
+        <main class="main-content">
+            <header class="page-header">
+                <div>
+                    <p class="page-date"><i class="bi bi-calendar3"></i> {{ today_text }}</p>
+                    <h1 class="page-title">{% block heading %}{% endblock %}</h1>
+                </div>
+                <div class="page-actions">{% block actions %}{% endblock %}</div>
+            </header>
+
+            {% include 'flash.html' %}
+            {% block content %}{% endblock %}
+
+            <footer class="app-footer">ZenFlow &middot; Smart Wellness Tracker &middot; B.Tech Project</footer>
+        </main>
+    </div>
+{% else %}
+    {# ---------- Public layout: simple top navbar ---------- #}
+    <nav class="navbar navbar-expand-md public-nav">
+        <div class="container">
+            <a class="brand" href="{{ url_for('index') }}"><span class="brand-mark"><i class="bi bi-flower1"></i></span> ZenFlow</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#publicMenu" aria-label="Toggle menu">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse justify-content-end" id="publicMenu">
+                <div class="d-flex flex-column flex-md-row gap-2 mt-3 mt-md-0">
+                    {% if session.get('user_id') %}
+                        <a href="{{ url_for('dashboard') }}" class="btn btn-brand">Go to Dashboard</a>
+                    {% else %}
+                        <a href="{{ url_for('login') }}" class="btn btn-light-soft">Login</a>
+                        <a href="{{ url_for('register') }}" class="btn btn-brand">Get Started</a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </nav>
+    <div class="container public-flash">{% include 'flash.html' %}</div>
+    {% block public_content %}{% endblock %}
+{% endif %}
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+{% if chart_data %}
+<script>
+    // Real data from the SQLite database, sent by Flask
+    window.chartData = {{ chart_data|tojson }};
+</script>
+{% endif %}
+<script src="{{ url_for('static', filename='js/charts.js') }}"></script>
+<script src="{{ url_for('static', filename='js/main.js') }}"></script>
+</body>
+</html>

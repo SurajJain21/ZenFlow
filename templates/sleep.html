@@ -1,0 +1,103 @@
+{% extends 'base.html' %}
+{% block title %}Sleep Tracker{% endblock %}
+{% block heading %}<i class="bi bi-moon-stars-fill text-sleep"></i> Sleep Tracker{% endblock %}
+
+{% block content %}
+<div class="row g-3 mb-4">
+    <div class="col-6 col-lg-3"><div class="stat-card tone-sleep"><small>Last sleep</small><strong>{{ last.duration|hours if last else '—' }}</strong></div></div>
+    <div class="col-6 col-lg-3"><div class="stat-card tone-sleep"><small>Daily target</small><strong>{{ goal|hours }}</strong></div></div>
+    <div class="col-6 col-lg-3"><div class="stat-card tone-sleep"><small>Average (this week)</small><strong>{{ week_avg|hours }}</strong></div></div>
+    <div class="col-6 col-lg-3"><div class="stat-card tone-sleep"><small>Average (all time)</small><strong>{{ average|hours }}</strong></div></div>
+</div>
+
+<div class="row g-4">
+    <div class="col-lg-7">
+        <div class="panel tone-sleep h-100">
+            <div class="panel-head"><h2>Log your sleep</h2></div>
+            <form method="post" action="{{ url_for('add_sleep') }}" class="needs-validation" novalidate id="sleepForm">
+                <div class="row g-3">
+                    <div class="col-sm-4">
+                        <label class="form-label" for="bedtime">Bedtime</label>
+                        <input type="time" class="form-control" id="bedtime" name="bedtime" value="23:00" required>
+                        <div class="invalid-feedback">Required.</div>
+                    </div>
+                    <div class="col-sm-4">
+                        <label class="form-label" for="wakeup_time">Wake-up time</label>
+                        <input type="time" class="form-control" id="wakeup_time" name="wakeup_time" value="07:00" required>
+                        <div class="invalid-feedback">Required.</div>
+                    </div>
+                    <div class="col-sm-4">
+                        <label class="form-label" for="sleep_date">Wake-up date</label>
+                        <input type="date" class="form-control" id="sleep_date" name="date" value="{{ today }}" max="{{ today }}" required>
+                        <div class="invalid-feedback">Pick a date.</div>
+                    </div>
+                </div>
+                <div class="duration-preview mt-3"><i class="bi bi-clock-history"></i> Total sleep: <strong id="sleepPreview">8h 0m</strong></div>
+                <button class="btn btn-brand-sleep mt-3" type="submit"><i class="bi bi-plus-lg"></i> Save sleep</button>
+            </form>
+        </div>
+    </div>
+    <div class="col-lg-5">
+        <div class="panel tone-sleep h-100">
+            <div class="panel-head"><h2>Sleep target</h2></div>
+            <p class="text-muted">Adults usually need 7&ndash;9 hours of sleep.</p>
+            <form method="post" action="{{ url_for('set_sleep_goal') }}" class="needs-validation" novalidate>
+                <label class="form-label" for="goal">Target (hours)</label>
+                <div class="input-group">
+                    <input type="number" class="form-control" id="goal" name="goal" min="1" max="16" step="0.5" value="{{ goal|round(1) }}" required>
+                    <button class="btn btn-brand-sleep" type="submit">Save</button>
+                    <div class="invalid-feedback">Between 1 and 16 hours.</div>
+                </div>
+            </form>
+            {% if last %}
+            <div class="compare mt-4">
+                {% set diff = last.duration - goal %}
+                {% if diff >= 0 %}
+                    <i class="bi bi-emoji-smile-fill text-activity"></i> Your last sleep met the target{% if diff > 0 %} by {{ diff|hours }}{% endif %}.
+                {% else %}
+                    <i class="bi bi-emoji-neutral-fill text-habit"></i> Your last sleep was {{ (-diff)|hours }} short of the target.
+                {% endif %}
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="col-12">
+        <div class="panel">
+            <div class="panel-head"><h2>Weekly sleep vs target</h2></div>
+            <div class="chart-box tall"><canvas id="sleepChart"></canvas></div>
+        </div>
+    </div>
+
+    <div class="col-12">
+        <div class="panel">
+            <div class="panel-head"><h2>Sleep history</h2><span class="badge-soft tone-sleep">Last {{ records|length }} records</span></div>
+            {% if records %}
+            <div class="table-responsive">
+                <table class="table align-middle mb-0">
+                    <thead><tr><th>Date</th><th>Bedtime</th><th>Wake-up</th><th>Duration</th><th>Vs target</th><th class="text-end">Action</th></tr></thead>
+                    <tbody>
+                    {% for r in records %}
+                        <tr>
+                            <td>{{ r.date|nicedate }}</td>
+                            <td>{{ r.bedtime|time12 }}</td>
+                            <td>{{ r.wakeup_time|time12 }}</td>
+                            <td><strong>{{ r.duration|hours }}</strong></td>
+                            <td>{% if r.duration >= goal %}<span class="badge-soft tone-activity">Met</span>{% else %}<span class="badge-soft tone-habit">-{{ (goal - r.duration)|hours }}</span>{% endif %}</td>
+                            <td class="text-end">
+                                <form method="post" action="{{ url_for('delete_sleep', record_id=r.id) }}" data-confirm="Delete this sleep record?">
+                                    <button class="btn btn-sm btn-delete" type="submit" aria-label="Delete"><i class="bi bi-trash3"></i></button>
+                                </form>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <p class="text-muted mb-0">No sleep records yet.</p>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
